@@ -1,0 +1,47 @@
+---
+title: "AssessmentPart1"
+author: "Ucfnhec"
+date: "07/11/2018"
+output: html_document
+---
+
+
+GUI-based Map
+```{r}
+#install.packages("jpeg")
+#install.packages("knitr", "ggplot2")
+library(knitr) 
+library(ggplot2)
+library(jpeg)
+img1_path <- "image/manchester.jpg"
+img1 <- readJPEG(img1_path, native = TRUE)
+include_graphics(img1_path)
+
+```
+This map is produced by QGIS, basically including the census data and boundary data. The density is calculated by population divide area. The illustration of the map follows graduated scheme and applies quantile to divide the data into five groups. This map indicates how people gathering in different locations in Manchester.
+
+
+
+
+code-based Map
+```{r}
+library(tidyverse)
+library(geojsonio)
+library(sf)
+library(tmap)
+library(tmaptools)
+#read some data attributes
+LondonData <- read_csv("https://files.datapress.com/london/dataset/ward-profiles-and-atlas/2015-09-24T14:21:24/ward-profiles-excel-version.csv", na = "n/a")
+#read some geometries
+EW <- geojson_read("http://geoportal.statistics.gov.uk/datasets/8edafbe3276d4b56aec60991cbddda50_2.geojson", what = "sp")
+#pull out London
+LondonMap <- EW[grep("^E09",EW@data$lad15cd),]
+#convert to a simple features object
+LondonMapSF <- st_as_sf(LondonMap)
+#append the data to the geometries
+LondonMapSF <- append_data(LondonMapSF,LondonData, key.shp = "lad15cd", key.data = "New code", ignore.duplicates = TRUE)
+#plot a choropleth
+qtm(LondonMapSF, fill = "% Not Born in UK - 2011")
+```
+
+
