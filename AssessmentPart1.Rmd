@@ -6,6 +6,12 @@ output: html_document
 ---
 
 
+Introduction 
+
+This document mainly contains two maps produced by GUI-based tools and code-based tools, accompanied with commentary text analysing the data source usage, workflows, cartographic good practice, benefits and defects of both methods, which provide a critical comparison and evaluation of mapping and cartography in different software packages.
+
+
+
 GUI-based Map
 ```{r}
 #install.packages("jpeg")
@@ -18,30 +24,70 @@ img1 <- readJPEG(img1_path, native = TRUE)
 include_graphics(img1_path)
 
 ```
-This map is produced by QGIS, basically including the census data and boundary data. The density is calculated by population divide area. The illustration of the map follows graduated scheme and applies quantile to divide the data into five groups. This map indicates how people gathering in different locations in Manchester.
 
+This map is produced by QGIS, basically including the census data and boundary data. The workflow mainly includes calculating the density by population dividing area. And the illustration of the map follows graduated scheme and applies quantile to divide the data into five groups. This map indicates how people gathering in different locations in Manchester.
 
 
 
 code-based Map
 ```{r}
+#install.packages("tidyverse")
+#install.packages("maptools")
+#install.packages("RColorBrewer")
+#install.packages("classInt")
+#install.packages("OpenStreetMap")
+#install.packages("sp")
+#install.packages("rgeos")
+#install.packages("tmap")
+#install.packages("tmaptools")
+#install.packages("sf")
+#install.packages("rgdal")
+#install.packages("geojsonio")
 library(tidyverse)
-library(geojsonio)
-library(sf)
+library(maptools)
+library(RColorBrewer)
+library(classInt)
+library(OpenStreetMap)
+library(sp)
+library(rgeos)
 library(tmap)
 library(tmaptools)
-#read some data attributes
-LondonData <- read_csv("https://files.datapress.com/london/dataset/ward-profiles-and-atlas/2015-09-24T14:21:24/ward-profiles-excel-version.csv", na = "n/a")
-#read some geometries
-EW <- geojson_read("http://geoportal.statistics.gov.uk/datasets/8edafbe3276d4b56aec60991cbddda50_2.geojson", what = "sp")
-#pull out London
-LondonMap <- EW[grep("^E09",EW@data$lad15cd),]
-#convert to a simple features object
-LondonMapSF <- st_as_sf(LondonMap)
-#append the data to the geometries
-LondonMapSF <- append_data(LondonMapSF,LondonData, key.shp = "lad15cd", key.data = "New code", ignore.duplicates = TRUE)
-#plot a choropleth
-qtm(LondonMapSF, fill = "% Not Born in UK - 2011")
+library(sf)
+library(rgdal)
+library(geojsonio)
+
+
+pop <- read_shape("data/E08000003/shapefiles/E08000003.shp", as.sf = TRUE)
+
+tm_shape(pop) + 
+  tm_polygons("all_ages", 
+              style="jenks",
+              palette="Purples",
+              title="population",
+              alpha = 0.8) + 
+  tm_compass(position = c("right", "top"),type ="arrow")+ 
+  tm_scale_bar(position = c("right", "top")) +
+  tm_layout(title = "Manchester Population",  
+            legend.position = c("right", 
+                                "bottom"))
+
 ```
 
+This code-based map produced by R, indicates the population distribution in Manchester. The workflow could refer to the code above, which read the shapefile document, and plot the selected layer with some adjustment on parameters. 
+
+
+
+Assessment of benefits and drawbacks
+
+In this practice, the GUI-based map gives intuitive results, which is more convenient in display the desired map, and it is also easier to manage the multiple operations in QGIS or Arcgis, like combining various map and select the specific attributes. The colour scheme, size and position can be directed adjusted through simple operations. However, for its drawbacks, after obtaining the final maps, it is hard to observe the work flows towards the data behind the map. Therefore, it will be less reproducible.
+
+The advantages of code-based map is that it provide rational and logical work flows of dealing with the data, and step by step plot the final map. All the operation contributing to the plot are listed in sequence, tells an integrated story. It also offers convenience to change conditions in the intermediate steps that lead to a different consequence. Whereas the defects are also evident that, it takes more efforts to produce the desired the map due to the complexity of coding. 
+
+
+
+Review of cartographic good practice
+
+A cartographic good practice should have explicit, clear and readable contents.  A well supplementary legend, compass, scalebar and title are the necessity. Comparing two maps, the first map has better arrangement on these elements, which provide straightforward instructions to understanding the map content.  
+
+Moreover, for the outcome map, this second map only display the amount of population in different LSOAs, while the first map should be more precise and intuitive to conclude the information on where are the locations that more people choose to live. It means that the first would be a more valid evidence to support data analysis.
 
